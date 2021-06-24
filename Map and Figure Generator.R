@@ -1,9 +1,6 @@
 
 rm(list = ls())   # Remove all objects from environment
-.libPaths()
-.libPaths("H:/Docs/R/win-library/3.4")   #Set path to package library
-.libPaths("C:/Users/mpowers/R Package Library") #Set path to package library
-setwd("//ad.sfwmd.gov/dfsroot/data/rsd_sta/STA_vegetation/STA_Vegetation_monitoring/SAV Surveys/R Script for Map and Figure Creation")
+
 # Libraries ---------------------------------------------------------------
 
 
@@ -13,7 +10,7 @@ library(dplyr)
 library(ggplot2)
 library(readxl)
 library(viridis)
-library(writexl)
+#library(writexl)
 library(lubridate)
 library(rgdal)
 library(scales)
@@ -25,7 +22,7 @@ library(ggTimeSeries)
 #------------------------------------SAV Data Import------------------------------------------------------------------------------------------------------------------------------------------
 
 #Import all STA SAV Data
-All_SAV_Data <-read_excel("//ad/DFSroot/data/rsd_sta/STA_vegetation/STA_Vegetation_monitoring/SAV Surveys/All SAV Data.xlsx", sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric", 
+All_SAV_Data <-read_excel("Data/All SAV Data.xlsx", sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric", 
  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "text", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "text", "text","text", "text", "text", "text", "text", "text")) %>%
@@ -43,7 +40,7 @@ str_replace("A5", "A-56")
 
 
 #Import DF of STA cell names
-Region_names <-read_excel("STA Cell Outline Names.xlsx")
+Region_names <-read_excel("STA Outlines/STA Cell Outline Names.xlsx")
 
 #Import outlines of STA cells in DF format 
 for(i in seq_along(Region_names[[2]]))
@@ -68,7 +65,7 @@ for(i in seq_along(Region_names[[2]]))
 }
 
 
-#---------------------------------Funtions needed to transform Data. Run before creaing figures or maps----------------------------------------------------------
+#---------------------------------Functions needed to transform Data. Run before creaing figures or maps----------------------------------------------------------
 #Abundance and frequency of SAV in selected work area
 veg_abundance_and_frequency <- function(All_SAV_Data,work_area) 
 {
@@ -137,7 +134,7 @@ facet_matcher <- function(SAV_data,SP_data)
   left_join(num_of_facets,SP_data,by="key")
 }
 
-#plots dominant and codominat vegetation by moving coordinantes of codominant vegetation slightly so it can be plotted
+#plots dominant and codominant vegetation by moving coordinantes of codominant vegetation slightly so it can be plotted
 codominant_vegetation <- function(All_SAV_Data,work_area)  
 {
   SAV_Data_Long <- All_SAV_Data %>%   
@@ -185,7 +182,7 @@ for(i in seq_along(Region_names[[3]]))
   labs(x="Survey Date",y="Abundance",title=paste("SAV Abundance by Species in ",work_area))+
   theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
 
-  #ggsave(paste("Figures/",work_area,"_Abundance.jpg"),plot=plot_abundance) #save abundance plot
+  ggsave(paste("Figures/",work_area,"_Abundance.jpg"),plot=plot_abundance) #save abundance plot
   
   #Frequency of Occurance Plot 
   plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data,work_area),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
@@ -216,11 +213,11 @@ for(i in seq_along(Region_names[[3]]))
   theme(axis.text.x=element_text(angle=90,hjust=1,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.3))
   
-  #ggsave(paste("Figures/",work_area,"_Relative_SAV.jpg"),plot=plot_Relative_SAV_Coverage) #save Relative SAV Coverage by Species plot
+  ggsave(paste("Figures/",work_area,"_Relative_SAV.jpg"),plot=plot_Relative_SAV_Coverage) #save Relative SAV Coverage by Species plot
   
   #Time Series Map of dominant and up to 4 codominant species with cell outlines 
   map_codominant_veg <-ggplot(codominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=(COVER),fill=SPECIES))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+labs(title=paste("Dominant SAV Over Time in ",work_area))+
-  geom_point(shape=22)+coord_map()+scale_fill_brewer(palette = "Set3",direction=-1)+
+  geom_point(shape=22)+coord_quickmap()+scale_fill_brewer(palette = "Set3",direction=-1)+
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
   geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
@@ -229,11 +226,11 @@ for(i in seq_along(Region_names[[3]]))
   #Time Series Map of Total SAV with cell outlines
   map_total_SAV <- ggplot(dominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=`Total SAV`,fill=`Total SAV`))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+
   labs(title=paste("Vegetation Over Time in ",work_area))+
-  geom_point(shape=22)+coord_map()+scale_fill_viridis(direction=-1)+
+  geom_point(shape=22)+coord_quickmap()+scale_fill_viridis(direction=-1)+
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
   geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
-  #ggsave(paste("Figures/",work_area,"_Total_SAV_Over_Time.jpg"),plot=map_total_SAV) #save total sav map
+  ggsave(paste("Figures/",work_area,"_Total_SAV_Over_Time.jpg"),plot=map_total_SAV) #save total sav map
 }
 
 
