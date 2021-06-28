@@ -14,7 +14,7 @@ library(viridis)
 library(lubridate)
 library(rgdal)
 library(scales)
-library(ggTimeSeries)
+#library(ggTimeSeries)
 
 
 
