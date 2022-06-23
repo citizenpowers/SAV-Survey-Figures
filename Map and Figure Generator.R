@@ -28,6 +28,15 @@ All_SAV_Data <-read_excel("Data/All SAV Data.xlsx", sheet = "Data", col_types = 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "text", "text","text", "text", "text", "text", "text", "text")) %>%
   mutate(`CELL NAME` = REGION)
 
+All_SAV_Data <-read_excel("Data/All SAV Data_new.xlsx", sheet = "Data") %>%
+  mutate(`CELL NAME` = REGION)
+
+
+
+
+
+
+
 All_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
 str_replace("_", " C") %>% 
 str_replace("A1", "A-1") %>% 
