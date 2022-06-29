@@ -28,13 +28,12 @@ All_SAV_Data <-read_excel("Data/All SAV Data.xlsx", sheet = "Data", col_types = 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "text", "text","text", "text", "text", "text", "text", "text")) %>%
   mutate(`CELL NAME` = REGION)
 
-All_SAV_Data <-read_excel("Data/All SAV Data_new.xlsx", sheet = "Data") %>%
-  mutate(`CELL NAME` = REGION)
-
-
-
-
-
+#New SAV data file
+All_SAV_Data <- read_excel("Data/All SAV Data_new.xlsx",  sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric",  "numeric", "numeric", "numeric", "text", "numeric", "numeric", "numeric", 
+"numeric", "numeric", "numeric", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
+"numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
+ "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) %>%
+mutate(`CELL NAME` = REGION)
 
 
 All_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
@@ -74,7 +73,7 @@ for(i in seq_along(Region_names[[2]]))
 }
 
 
-#---------------------------------Functions needed to transform Data. Run before creaing figures or maps----------------------------------------------------------
+#---------------------------------Functions needed to transform Data. Run before creating figures or maps----------------------------------------------------------
 #Abundance and frequency of SAV in selected work area
 veg_abundance_and_frequency <- function(All_SAV_Data,work_area) 
 {
@@ -244,6 +243,33 @@ for(i in seq_along(Region_names[[3]]))
 
 
 #---------------------------------------Test Code ----------------------------------------------------------------------------------
+
+  SAV_Data_Long <- All_SAV_Data_new %>%   
+    gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,NAJAS_GUADALUPENSIS,NAJAS_MARINA,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%   #Gathers Common SAV Species into long format
+    dplyr::select(SITE,LAT_DD,`LONG_DD`,DATE,WATER_YEAR,SEASON,CELL,REGION,SPECIES,COVER,`Survey Number`) %>%   #selects pertinant columns
+    mutate(YEAR=year(DATE),MONTH=month(DATE),DAY=day(DATE)) %>%   #adds Year, Month, and Day columns for to use as grouping varaible in analysis later
+    rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%  #rename columns 
+    filter(`Lat`!="<Null>") %>%  #remove rows with no spatial information
+    filter(`REGION`=="STA1W_3") %>%  #Selects work area
+    filter(SPECIES!="TOTAL_SAV")%>%   #removes total SAV as this is calcualted from other SAV coverages
+    dplyr::select(SITE,Lat,Long,DATE,WATER_YEAR,SEASON,CELL,REGION,SPECIES,COVER,`Survey Number`)%>%  #selects pertinant columns
+    mutate(DATE=as.Date(DATE)) %>% #removes time information from date
+    group_by(`Survey Number`) %>%   
+    mutate(`Display Date`=format(min(DATE),"%Y %b")) %>%   #Creates Display Date, Needed as some surveys take place over multiple days
+    group_by(SITE,`Display Date`) %>%  
+    mutate(`Total SAV`=sum(COVER,na.rm=TRUE)) %>%  #calculates total SAV from individual species abundance
+    mutate(COVER=ifelse(COVER==0,NA,COVER)) %>%  #Converts 0s to NAs otherwise 0s would be used in interpolation map
+    mutate(rank=rank(-COVER,ties.method="min")) %>%  #Ranks species by coverage densities at a site and date. Ties are ranked same as lowest ranking
+    filter(rank==1) %>%  # Keeps all vegetation that is Dominant or Codominant
+    mutate(n=n()) %>%
+    mutate(rank2=rank(-COVER,ties.method="first")) %>%  #second ranking. Lowest ranking goes to first value found in vector
+    #top_n( 1, rank) %>% #Selects highest ranked rows at for each date and site 
+    mutate(x=round(as.numeric(`Long`),digits=3))  %>% # define x & y as longitude and latitude with 3 digits
+    mutate(y=round(as.numeric(`Lat`),digits=3)) %>%
+    mutate(x=ifelse(n==2,ifelse(rank2==2,x-.002,x+.002),x)) %>% #moves x coordinate slightly of 2 codominant species so they can be plotted together
+    mutate(x=ifelse(n==3,ifelse(rank2==2,x-.002,ifelse(rank2==3,x+.002,x)),x)) %>% #moves x for 3 equally ranked species
+    mutate(x=ifelse(n==4,ifelse(rank2==2,x-.002,ifelse(rank2==4,x+.002,x)),x)) %>% #moves x for 4 equally ranked species
+    mutate(y=ifelse(n==4,ifelse(rank2==1,y-.002,ifelse(rank2==3,y+.002,y)),y))  #moves y for 4 equally ranked species
 
 
 SAV_Summary_Stats <- All_SAV_Data %>%
