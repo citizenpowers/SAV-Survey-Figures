@@ -21,20 +21,14 @@ library(scales)
 
 #------------------------------------SAV Data Import------------------------------------------------------------------------------------------------------------------------------------------
 
-#Import all STA SAV Data
-All_SAV_Data <-read_excel("Data/All SAV Data.xlsx", sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric", 
- "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
-"numeric", "numeric", "numeric",  "numeric", "numeric", "text", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", 
-"numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric", "text", "text","text", "text", "text", "text", "text", "text")) %>%
-  mutate(`CELL NAME` = REGION)
 
 #New SAV data file
-All_SAV_Data <- read_excel("Data/All SAV Data_new.xlsx",  sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric",  "numeric", "numeric", "numeric", "text", "numeric", "numeric", "numeric", 
+All_SAV_Data <- read_excel("Data/All SAV Data.xlsx",  sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric",  "numeric", "numeric", "numeric", "text", "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) %>%
 mutate(`CELL NAME` = REGION)
-
+str(All_SAV_Data_new)
 
 All_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
 str_replace("_", " C") %>% 
@@ -80,7 +74,7 @@ veg_abundance_and_frequency <- function(All_SAV_Data,work_area)
   #Creates DF for presence of total SAV at site
   SAV_present <- All_SAV_Data %>%  
   gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
-  filter(`CELL NAME`==work_area) %>%
+  filter(`REGION`==work_area) %>%
   mutate(COVER=as.numeric(COVER)) %>%
   mutate(COVER=ifelse(is.na(COVER),0,COVER)) %>%
   distinct() %>%
@@ -95,7 +89,7 @@ veg_abundance_and_frequency <- function(All_SAV_Data,work_area)
   SAV_Summary_Stats <- All_SAV_Data %>%
   gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
   rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%
-  filter(`CELL NAME`==work_area) %>%
+  filter(REGION==work_area) %>%
   mutate(COVER=as.numeric(COVER)) %>%
   mutate(COVER=ifelse(COVER==0,NA,COVER)) %>%
   group_by(`Survey Number`,SPECIES) %>%
@@ -276,7 +270,7 @@ for(i in seq_along(Region_names[[3]]))
 #veg_abundance_and_frequency <- function(All_SAV_Data,work_area)   Test the function
   SAV_present <- All_SAV_Data %>%  
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
-    filter(`CELL NAME`=="STA1W_5B") %>%
+    filter(`REGION`=="STA34_1B") %>%
     mutate(COVER=as.numeric(COVER)) %>%
     mutate(COVER=ifelse(is.na(COVER),0,COVER)) %>%
     distinct() %>%
@@ -291,7 +285,7 @@ for(i in seq_along(Region_names[[3]]))
   SAV_Summary_Stats <- All_SAV_Data %>%
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
     rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%
-    filter(`CELL NAME`=="STA1W_5B") %>%
+    filter(`REGION`=="STA1W_5B") %>%
     mutate(COVER=as.numeric(COVER)) %>%
     mutate(COVER=ifelse(COVER==0,NA,COVER)) %>%
     group_by(`Survey Number`,SPECIES) %>%
