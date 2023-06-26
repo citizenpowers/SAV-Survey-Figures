@@ -27,10 +27,11 @@ All_SAV_Data <- read_excel("Data/All SAV Data.xlsx",  sheet = "Data", col_types 
 "numeric", "numeric", "numeric", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) %>%
-mutate(`CELL NAME` = REGION)
-str(All_SAV_Data_new)
+mutate(`CELL NAME` = REGION) %>%
+mutate(DATE=as.Date(DATE))  #Convert to date only. Time not required
 
-All_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
+
+warningsAll_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
 str_replace("_", " C") %>% 
 str_replace("A1", "A-1") %>% 
 str_replace("A2", "A-2") %>% 
@@ -185,7 +186,7 @@ for(i in seq_along(Region_names[[3]]))
   labs(x="Survey Date",y="Abundance",title=paste("SAV Abundance by Species in ",cell_name))+
   theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
 
-  ggsave(paste("Figures/",region,"_Abundance.jpg"),plot=plot_abundance) #save abundance plot
+  ggsave(filename = paste("Figures/",region,"_Abundance.jpeg",sep = ""),plot=plot_abundance) #save abundance plot
   
   #Frequency of Occurance Plot 
   plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
@@ -195,7 +196,7 @@ for(i in seq_along(Region_names[[3]]))
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.5),aspect.ratio = 2/3)+
   labs(x="Date",y="Frequency of SAV Occurrence",title=paste("SAV Frequency by Species in",cell_name))
   
-  ggsave(paste("Figures/",region,"_Frequency.jpg"),plot=plot_frequency, width = 9, height = 6, units = "in") #save frequency plot
+  ggsave(paste("Figures/",region,"_Frequency.jpeg",sep = ""),plot=plot_frequency, width = 9, height = 6, units = "in") #save frequency plot
   
   #Frequency of Occurance Plot with total SAV frequency
   plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
@@ -206,7 +207,7 @@ for(i in seq_along(Region_names[[3]]))
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.5))+
   labs(x="Date",y="Frequency of SAV Occurrence",title=paste("SAV Frequency by Species in",region))
   
-  ggsave(paste("Figures/",region,"_Frequency_with_total_SAV.jpg"),plot=plot_frequency_with_total_SAV) #save frequency plot
+  ggsave(paste("Figures/",region,"_Frequency_with_total_SAV.jpeg",sep = ""),plot=plot_frequency_with_total_SAV) #save frequency plot
   
   #Relative SAV Coverage by Species plot
   plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
@@ -216,7 +217,7 @@ for(i in seq_along(Region_names[[3]]))
   theme(axis.text.x=element_text(angle=90,hjust=1,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.3))
   
-  ggsave(paste("Figures/",region,"_Relative_SAV.jpg"),plot=plot_Relative_SAV_Coverage) #save Relative SAV Coverage by Species plot
+  ggsave(paste("Figures/",region,"_Relative_SAV.jpeg",sep = ""),plot=plot_Relative_SAV_Coverage) #save Relative SAV Coverage by Species plot
   
   #Time Series Map of dominant and up to 4 codominant species with cell outlines 
   map_codominant_veg <-ggplot(codominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=(COVER),fill=SPECIES))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+labs(title=paste("Dominant SAV Over Time in ",cell_name))+
@@ -224,7 +225,7 @@ for(i in seq_along(Region_names[[3]]))
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
   geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
-  ggsave(paste("Figures/",region,"_SAV_Over_Time.jpg"),plot=map_codominant_veg) #save dominant vegetation map
+  ggsave(paste("Figures/",region,"_SAV_Over_Time.jpeg",sep = ""),plot=map_codominant_veg) #save dominant vegetation map
   
   #Time Series Map of Total SAV with cell outlines
   map_total_SAV <- ggplot(dominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=`Total SAV`,fill=`Total SAV`))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+
@@ -233,7 +234,7 @@ for(i in seq_along(Region_names[[3]]))
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
   geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
-  ggsave(paste("Figures/",region,"_Total_SAV_Over_Time.jpg"),plot=map_total_SAV) #save total sav map
+  ggsave(paste("Figures/",region,"_Total_SAV_Over_Time.jpeg",sep = ""),plot=map_total_SAV) #save total sav map
 }
 
 
