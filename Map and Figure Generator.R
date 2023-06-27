@@ -10,11 +10,10 @@ library(dplyr)
 library(ggplot2)
 library(readxl)
 library(viridis)
-#library(writexl)
 library(lubridate)
 library(rgdal)
 library(scales)
-#library(ggTimeSeries)
+
 
 
 
@@ -26,12 +25,19 @@ library(scales)
 All_SAV_Data <- read_excel("Data/All SAV Data.xlsx",  sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric",  "numeric", "numeric", "numeric", "text", "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
- "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) %>%
-mutate(`CELL NAME` = REGION) %>%
-mutate(DATE=as.Date(DATE))  #Convert to date only. Time not required
+ "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) 
 
 
-warningsAll_SAV_Data$`CELL NAME` <- All_SAV_Data$`CELL NAME` %>%
+
+# Tidy Data ---------------------------------------------------------------
+
+All_SAV_Data_Tidy <- All_SAV_Data  %>%
+mutate(`CELL NAME` = REGION)  %>%
+mutate(DATE=as.Date(DATE))    %>%                                                         #Convert to date only. Time not required
+filter(!str_detect(SAV_STATUS,fixed("Not Visited", ignore_case = T))|is.na(SAV_STATUS))   #remove not visited sites
+
+  
+All_SAV_Data_Tidy$`CELL NAME` <- All_SAV_Data_Tidy$`CELL NAME` %>%
 str_replace("_", " C") %>% 
 str_replace("A1", "A-1") %>% 
 str_replace("A2", "A-2") %>% 
@@ -70,10 +76,10 @@ for(i in seq_along(Region_names[[2]]))
 
 #---------------------------------Functions needed to transform Data. Run before creating figures or maps----------------------------------------------------------
 #Abundance and frequency of SAV in selected work area
-veg_abundance_and_frequency <- function(All_SAV_Data,work_area) 
+veg_abundance_and_frequency <- function(All_SAV_Data_Tidy,work_area) 
 {
   #Creates DF for presence of total SAV at site
-  SAV_present <- All_SAV_Data %>%  
+  SAV_present <- All_SAV_Data_Tidy %>%  
   gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
   filter(`REGION`==work_area) %>%
   mutate(COVER=as.numeric(COVER)) %>%
@@ -87,7 +93,7 @@ veg_abundance_and_frequency <- function(All_SAV_Data,work_area)
   select(`Survey Number`,`Frequency of SAV Presence`)
   
   #DF of SAV frequency by species
-  SAV_Summary_Stats <- All_SAV_Data %>%
+  SAV_Summary_Stats <- All_SAV_Data_Tidy %>%
   gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
   rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%
   filter(REGION==work_area) %>%
@@ -101,9 +107,9 @@ veg_abundance_and_frequency <- function(All_SAV_Data,work_area)
 }
 
 #Transforms data to long format in selected work area. 
-dominant_vegetation <- function(All_SAV_Data,work_area)
+dominant_vegetation <- function(All_SAV_Data_Tidy,work_area)
 {
-  SAV_Data_Long <- All_SAV_Data %>%   
+  SAV_Data_Long <- All_SAV_Data_Tidy %>%   
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,NAJAS_GUADALUPENSIS,NAJAS_MARINA,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%   #Gathers Common SAV Species into long format
     dplyr::select(SITE,LAT_DD,`LONG_DD`,DATE,WATER_YEAR,SEASON,CELL,REGION,SPECIES,COVER,`Survey Number`) %>%   #selects pertinant columns
     mutate(YEAR=year(DATE),MONTH=month(DATE),DAY=day(DATE)) %>%   #adds Year, Month, and Day columns for to use as grouping varaible in analysis later
@@ -138,9 +144,9 @@ facet_matcher <- function(SAV_data,SP_data)
 }
 
 #plots dominant and codominant vegetation by moving coordinantes of codominant vegetation slightly so it can be plotted
-codominant_vegetation <- function(All_SAV_Data,work_area)  
+codominant_vegetation <- function(All_SAV_Data_Tidy,work_area)  
 {
-  SAV_Data_Long <- All_SAV_Data %>%   
+  SAV_Data_Long <- All_SAV_Data_Tidy %>%   
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,NAJAS_GUADALUPENSIS,NAJAS_MARINA,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%   #Gathers Common SAV Species into long format
     dplyr::select(SITE,LAT_DD,`LONG_DD`,DATE,WATER_YEAR,SEASON,CELL,REGION,SPECIES,COVER,`Survey Number`) %>%   #selects pertinant columns
     mutate(YEAR=year(DATE),MONTH=month(DATE),DAY=day(DATE)) %>%   #adds Year, Month, and Day columns for to use as grouping varaible in analysis later
@@ -181,7 +187,7 @@ for(i in seq_along(Region_names[[3]]))
   
   
   #Sum of Coverages (Abundances) stacked columns 
-  plot_abundance <-ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b"),Date),Abundance,fill=SPECIES))+geom_col(position = "stack")+
+  plot_abundance <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b"),Date),Abundance,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_viridis(discrete = TRUE,direction = -1)+
   labs(x="Survey Date",y="Abundance",title=paste("SAV Abundance by Species in ",cell_name))+
   theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
@@ -189,7 +195,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(filename = paste("Figures/",region,"_Abundance.jpeg",sep = ""),plot=plot_abundance) #save abundance plot
   
   #Frequency of Occurance Plot 
-  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
   theme(axis.text.x=element_text(angle=90,hjust=0.5,vjust=0.5,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
@@ -199,7 +205,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(paste("Figures/",region,"_Frequency.jpeg",sep = ""),plot=plot_frequency, width = 9, height = 6, units = "in") #save frequency plot
   
   #Frequency of Occurance Plot with total SAV frequency
-  plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+  plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
   geom_point(aes(reorder(as.character(Date,format="%Y %b %d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
@@ -210,7 +216,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(paste("Figures/",region,"_Frequency_with_total_SAV.jpeg",sep = ""),plot=plot_frequency_with_total_SAV) #save frequency plot
   
   #Relative SAV Coverage by Species plot
-  plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data,region),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
+  plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
   labs(x="Survey Date",y="Relative SAV Coverage (%)",title=paste("Relative SAV Coverage by Species in ",cell_name))+
@@ -220,19 +226,19 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(paste("Figures/",region,"_Relative_SAV.jpeg",sep = ""),plot=plot_Relative_SAV_Coverage) #save Relative SAV Coverage by Species plot
   
   #Time Series Map of dominant and up to 4 codominant species with cell outlines 
-  map_codominant_veg <-ggplot(codominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=(COVER),fill=SPECIES))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+labs(title=paste("Dominant SAV Over Time in ",cell_name))+
+  map_codominant_veg <-ggplot(codominant_vegetation(All_SAV_Data_Tidy,region),aes(x=x, y=y,size=(COVER),fill=SPECIES))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+labs(title=paste("Dominant SAV Over Time in ",cell_name))+
   geom_point(shape=22)+coord_quickmap()+scale_fill_brewer(palette = "Set3",direction=-1)+
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
-  geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
+  geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data_Tidy,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
   ggsave(paste("Figures/",region,"_SAV_Over_Time.jpeg",sep = ""),plot=map_codominant_veg) #save dominant vegetation map
   
   #Time Series Map of Total SAV with cell outlines
-  map_total_SAV <- ggplot(dominant_vegetation(All_SAV_Data,region),aes(x=x, y=y,size=`Total SAV`,fill=`Total SAV`))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+
+  map_total_SAV <- ggplot(dominant_vegetation(All_SAV_Data_Tidy,region),aes(x=x, y=y,size=`Total SAV`,fill=`Total SAV`))+facet_wrap(~reorder(`Display Date`,`Survey Number`))+
   labs(title=paste("Vegetation Over Time in ",cell_name))+
   geom_point(shape=22)+coord_quickmap()+scale_fill_viridis(direction=-1)+
   theme(panel.background = element_blank(),axis.ticks = element_blank(),axis.text = element_blank(),axis.title = element_blank()) +
-  geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
+  geom_path(data=facet_matcher(dominant_vegetation(All_SAV_Data_Tidy,region),get(paste(region,"_11",sep=""))), aes(long,lat),inherit.aes = FALSE)+theme_void()
   
   ggsave(paste("Figures/",region,"_Total_SAV_Over_Time.jpeg",sep = ""),plot=map_total_SAV) #save total sav map
 }
@@ -240,7 +246,7 @@ for(i in seq_along(Region_names[[3]]))
 
 #---------------------------------------Test Code ----------------------------------------------------------------------------------
 
-  SAV_Data_Long <- All_SAV_Data %>%   
+  SAV_Data_Long <- All_SAV_Data_Tidy %>%   
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,NAJAS_GUADALUPENSIS,NAJAS_MARINA,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%   #Gathers Common SAV Species into long format
     dplyr::select(SITE,LAT_DD,`LONG_DD`,DATE,WATER_YEAR,SEASON,CELL,REGION,SPECIES,COVER,`Survey Number`) %>%   #selects pertinant columns
     mutate(YEAR=year(DATE),MONTH=month(DATE),DAY=day(DATE)) %>%   #adds Year, Month, and Day columns for to use as grouping varaible in analysis later
@@ -268,8 +274,8 @@ for(i in seq_along(Region_names[[3]]))
     mutate(y=ifelse(n==4,ifelse(rank2==1,y-.002,ifelse(rank2==3,y+.002,y)),y))  #moves y for 4 equally ranked species
 
 
-#veg_abundance_and_frequency <- function(All_SAV_Data,work_area)   Test the function
-  SAV_present <- All_SAV_Data %>%  
+#veg_abundance_and_frequency <- function(All_SAV_Data_Tidy,work_area)   Test the function
+  SAV_present <- All_SAV_Data_Tidy %>%  
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
     filter(`REGION`=="STA34_1B") %>%
     mutate(COVER=as.numeric(COVER)) %>%
@@ -283,7 +289,7 @@ for(i in seq_along(Region_names[[3]]))
     select(`Survey Number`,`Frequency of SAV Presence`)
   
   #DF of SAV frequency by species
-  SAV_Summary_Stats <- All_SAV_Data %>%
+  SAV_Summary_Stats <- All_SAV_Data_Tidy %>%
     gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
     rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%
     filter(`REGION`=="STA1W_5B") %>%
@@ -302,7 +308,7 @@ for(i in seq_along(Region_names[[3]]))
 
 
 
-SAV_Summary_Stats <- All_SAV_Data %>%
+SAV_Summary_Stats <- All_SAV_Data_Tidy %>%
   gather(SPECIES,COVER,CHARA,CERATOPHYLLUM,HYDRILLA,`NAJAS_GUADALUPENSIS`,`NAJAS_MARINA`,POTAMOGETON,VALLISNERIA,UTRICULARIA) %>%
   rename( Lat = `LAT_DD`,Long = `LONG_DD`) %>%
   mutate(COVER=as.numeric(COVER)) %>%
@@ -311,7 +317,7 @@ SAV_Summary_Stats <- All_SAV_Data %>%
   summarise(Date=min(DATE),n=n(),Count=sum(!is.na(COVER)),Frequency=sum(!is.na(COVER))/n(),Abundance=sum(COVER,na.rm = TRUE),
   `Survey_Numbers min`=min(`Survey Number`),`Survey_Numbers max`=max(`Survey Number`),`Survey mismatch`=`Survey_Numbers max`-`Survey_Numbers min`) 
 
-ggplot(veg_abundance_and_frequency(All_SAV_Data,"STA-1W C3"),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,"STA-1W C3"),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
 scale_fill_brewer(type="qual",palette = "Spectral",direction=-1)+
 geom_point(aes(reorder(as.character(Date,format="%Y %b %d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
 scale_colour_discrete(name  ="Total SAV") +
@@ -319,7 +325,7 @@ theme(axis.text.x=element_text(angle=90,hjust=0))+labs(x="Date",y="Frequency",ti
 theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
 
 #Frequency of Occurance Plot 
-plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data,"STA-2 C3"),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,"STA-2 C3"),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
 scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
 labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
 theme(axis.text.x=element_text(angle=90,hjust=1,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
@@ -328,7 +334,7 @@ labs(x="Date",y="Frequency of SAV Occurrence",title=paste("SAV Frequency by Spec
 
 ggsave(paste("Figures/",work_area,"_Frequency.jpg"),plot=plot_frequency) #save frequency plot
 
-plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data,"STA-2 C3"),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
+plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,"STA-2 C3"),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
 scale_fill_viridis(discrete = TRUE,direction = -1)+
 labs(x="Survey Date",y="Relative SAV Coverage",title=paste("Relative SAV Coverage by Species in ","STA-2 C3"))+
 theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
@@ -344,7 +350,7 @@ for(i in seq_along(Region_names[[3]]))
   assign("work_area",Region_names[[i,3]])   #creates a variable from the region name 
 
   #Frequency of Occurance Plot 
-  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data,work_area),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,work_area),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
     scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
                       labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
     theme(axis.text.x=element_text(angle=90,hjust=1,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
