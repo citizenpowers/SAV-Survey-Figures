@@ -25,7 +25,7 @@ library(scales)
 All_SAV_Data <- read_excel("Data/All SAV Data.xlsx",  sheet = "Data", col_types = c("date",  "text", "text", "text", "text", "numeric",  "numeric", "numeric", "numeric", "text", "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric", "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
 "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", 
- "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric",  "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) 
+ "numeric", "numeric", "numeric",  "numeric", "numeric", "numeric", "numeric","numeric", "text", "text", "text", "numeric",  "text", "text", "numeric", "text")) 
 
 
 
