@@ -11,10 +11,11 @@ library(ggplot2)
 library(readxl)
 library(viridis)
 library(lubridate)
-library(rgdal)
+#library(rgdal) Not available for newer versions of R. 
 library(scales)
-
-
+library(rtools)
+library(sf)
+library(writexl)
 
 
 
@@ -73,6 +74,35 @@ for(i in seq_along(Region_names[[2]]))
   write_xlsx(Cell_Outline,path =paste("STA Outlines/",Region_names[[i,2]], ".xlsx"))
 }
 
+STA1W_C6 <- st_read("C:/Users/citiz/OneDrive/Desktop/SAV-Survey-Figures/Data/Shapefiles/Shapefiles/STA1W_6.shp")  %>% #import shapefile
+st_coordinates()  %>%                                                                          #get coordinates
+as.data.frame()   %>%                                                                          #convert to dataframe
+st_as_sf(coords = c("X", "Y"), crs ="EPSG:6438")  %>%                                          #set coordinate system that .shp came in
+st_transform( crs = 4326,arg=F) %>%                                                            #Convert to WGS 84 coordinate system
+mutate(lon = sf::st_coordinates(.)[,1],lat = sf::st_coordinates(.)[,2])  %>%                   #Extract coordinates to lat and long columns
+select(lon,lat)  %>% 
+rename(long="lon") %>%
+write_xlsx(path="./STA Outlines/STA1W_6_11 .xlsx")
+
+STA1W_C7 <- st_read("C:/Users/citiz/OneDrive/Desktop/SAV-Survey-Figures/Data/Shapefiles/Shapefiles/STA1W_7.shp")  %>% #import shapefile
+st_coordinates()  %>%                                                                          #get coordinates
+as.data.frame()   %>%                                                                          #convert to dataframe
+st_as_sf(coords = c("X", "Y"), crs ="EPSG:6438")  %>%                                          #set coordinate system that .shp came in
+st_transform( crs = 4326,arg=F) %>%                                                            #Convert to WGS 84 coordinate system
+mutate(lon = sf::st_coordinates(.)[,1],lat = sf::st_coordinates(.)[,2])  %>%                   #Extract coordinates to lat and long columns
+select(lon,lat)  %>% 
+rename(long="lon") %>%
+write_xlsx(path="./STA Outlines/STA1W_7_11 .xlsx")
+
+STA1W_C8 <- st_read("C:/Users/citiz/OneDrive/Desktop/SAV-Survey-Figures/Data/Shapefiles/Shapefiles/STA1W_8.shp")  %>% #import shapefile
+st_coordinates()  %>%                                                                          #get coordinates
+as.data.frame()   %>%                                                                          #convert to dataframe
+st_as_sf(coords = c("X", "Y"), crs ="EPSG:6438")  %>%                                          #set coordinate system that .shp came in
+st_transform( crs = 4326,arg=F) %>%                                                            #Convert to WGS 84 coordinate system
+mutate(lon = sf::st_coordinates(.)[,1],lat = sf::st_coordinates(.)[,2])  %>%                   #Extract coordinates to lat and long columns
+select(lon,lat)  %>% 
+rename(long="lon") %>%
+write_xlsx(path="./STA Outlines/STA1W_8_11 .xlsx")
 
 #---------------------------------Functions needed to transform Data. Run before creating figures or maps----------------------------------------------------------
 #Abundance and frequency of SAV in selected work area
@@ -187,7 +217,7 @@ for(i in seq_along(Region_names[[3]]))
   
   
   #Sum of Coverages (Abundances) stacked columns 
-  plot_abundance <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b"),Date),Abundance,fill=SPECIES))+geom_col(position = "stack")+
+  plot_abundance <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Abundance,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_viridis(discrete = TRUE,direction = -1)+
   labs(x="Survey Date",y="Abundance",title=paste("SAV Abundance by Species in ",cell_name))+
   theme(panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1),axis.line = element_line(colour = "black"))
@@ -195,7 +225,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(filename = paste("Figures/",region,"_Abundance.jpeg",sep = ""),plot=plot_abundance) #save abundance plot
   
   #Frequency of Occurance Plot 
-  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+  plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
   theme(axis.text.x=element_text(angle=90,hjust=0.5,vjust=0.5,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
@@ -205,7 +235,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(paste("Figures/",region,"_Frequency.jpeg",sep = ""),plot=plot_frequency, width = 9, height = 6, units = "in") #save frequency plot
   
   #Frequency of Occurance Plot with total SAV frequency
-  plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b %d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
+  plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
   geom_point(aes(reorder(as.character(Date,format="%Y %b %d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
@@ -216,7 +246,7 @@ for(i in seq_along(Region_names[[3]]))
   ggsave(paste("Figures/",region,"_Frequency_with_total_SAV.jpeg",sep = ""),plot=plot_frequency_with_total_SAV) #save frequency plot
   
   #Relative SAV Coverage by Species plot
-  plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y %b"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
+  plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
   labs(x="Survey Date",y="Relative SAV Coverage (%)",title=paste("Relative SAV Coverage by Species in ",cell_name))+
