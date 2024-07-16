@@ -236,7 +236,7 @@ for(i in seq_along(Region_names[[3]]))
   
   #Frequency of Occurance Plot with total SAV frequency
   plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
-  geom_point(aes(reorder(as.character(Date,format="%Y %b %d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
+  geom_point(aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
   scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
   labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
   theme(axis.text.x=element_text(angle=90,hjust=0,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
