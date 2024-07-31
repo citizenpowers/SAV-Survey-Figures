@@ -13,7 +13,7 @@ library(viridis)
 library(lubridate)
 #library(rgdal) Not available for newer versions of R. 
 library(scales)
-library(rtools)
+#library(rtools)
 library(sf)
 library(writexl)
 
@@ -45,6 +45,9 @@ str_replace("A2", "A-2") %>%
 str_replace("A34", "A-34") %>% 
 str_replace("A5", "A-56")
 
+# Theme -------------------------------------------------------------------
+
+okabe_ito_color_pallete <- c("CERATOPHYLLUM"="#E69F00", "CHARA"="#56B4E9", "HYDRILLA"="#009E73", "NAJAS_GUADALUPENSIS"="#F0E442", "NAJAS_MARINA"="#0072B2", "POTAMOGETON"="#D55E00", "UTRICULARIA"="#CC79A7", "VALLISNERIA"="#999999")
 
 # Import and transforms spatial Data---------------------------------------------------------------------------------- -----------------------------------------------------
 
@@ -226,8 +229,9 @@ for(i in seq_along(Region_names[[3]]))
   
   #Frequency of Occurance Plot 
   plot_frequency <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
-  scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
-  labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  #scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
+  #labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  scale_fill_manual(values=okabe_ito_color_pallete)+
   theme(axis.text.x=element_text(angle=90,hjust=0.5,vjust=0.5,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.5),aspect.ratio = 2/3)+
   labs(x="Date",y="Frequency of SAV Occurrence",title=paste("SAV Frequency by Species in",cell_name))
@@ -237,8 +241,9 @@ for(i in seq_along(Region_names[[3]]))
   #Frequency of Occurance Plot with total SAV frequency
   plot_frequency_with_total_SAV <- ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),Frequency,fill=SPECIES))+geom_col(position = "stack")+
   geom_point(aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),`Frequency of SAV Presence`),shape=3,size=3,color="black",show.legend=FALSE)+
-  scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
-  labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  #scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
+  #labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  scale_fill_manual(values=okabe_ito_color_pallete)+
   theme(axis.text.x=element_text(angle=90,hjust=0,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.5))+
   labs(x="Date",y="Frequency of SAV Occurrence",title=paste("SAV Frequency by Species in",region))
@@ -247,8 +252,9 @@ for(i in seq_along(Region_names[[3]]))
   
   #Relative SAV Coverage by Species plot
   plot_Relative_SAV_Coverage <-ggplot(veg_abundance_and_frequency(All_SAV_Data_Tidy,region),aes(reorder(as.character(Date,format="%Y-%m-%d"),Date),`Relative SAV Coverage`,fill=SPECIES))+geom_col(position = "stack")+
-  scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
-  labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  #scale_fill_brewer(type="qual",palette = "Spectral",direction=-1,name ="Species",breaks=c("CERATOPHYLLUM", "CHARA", "HYDRILLA", "NAJAS_GUADALUPENSIS", "NAJAS_MARINA", "POTAMOGETON", "UTRICULARIA", "VALLISNERIA"),
+  #labels=c("Ceratophyllum", "Chara", "Hydrilla", "Najas guadalupensis", "Najas marina", "Potamogeton", "Utricularia", "Vallisneria"))+
+  scale_fill_manual(values=okabe_ito_color_pallete)+
   labs(x="Survey Date",y="Relative SAV Coverage (%)",title=paste("Relative SAV Coverage by Species in ",cell_name))+
   theme(axis.text.x=element_text(angle=90,hjust=1,size=10,face="bold"),axis.text.y=element_text(size=10,face="bold"),axis.title.x=element_blank(),axis.title.y=element_text(face="bold",size=16),panel.background = element_blank(),
   axis.line = element_line(colour = "black"),plot.title =element_text(size=18,face="bold",hjust=.3))
